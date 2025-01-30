@@ -227,5 +227,20 @@ mod vector {
         }
     }
 
-
+    impl fmt::Display for BigInt {
+        fn fmt (&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+            if self.is_zero () {
+                return write!(f, "0");
+            }
+            if self.is_negative {
+                write!(f, "-")?;
+            }
+            let last_idx = self.digits.len () - 1;
+            write!(f, "{}", self.digits [last_idx])?;
+            for i in (0..last_idx).rev () {
+                write!(f, "{:0width$}", self.digits [i], width = BigInt::BASE_STR)?;
+            }
+            Ok(())
+        }
+    }
 }
