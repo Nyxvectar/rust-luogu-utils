@@ -102,4 +102,49 @@ mod vector {
         }
     }
 
+    impl Add for &BigInt {
+        type Output = BigInt;
+
+        fn add (self, rhs: Self) -> Self::Output {
+            if self.is_negative != rhs.is_negative {
+                if self.is_negative {
+                    let mut self_pos = self.clone ();
+                    self_pos.is_negative = false;
+                    rhs - &self_pos
+                } else {
+                    let mut rhs_pos = rhs.clone ();
+                    rhs_pos.is_negative = false;
+                    self - &rhs_pos
+                }
+            } else {
+                let mut result = Vec::new ();
+                let mut carry = 0;
+                let max_len = self.digits.len ().max (rhs.digits.len ());
+
+                for i in 0..max_len {
+                    let a = self.digits.get(i).copied().unwrap_or(0);
+                    let b = rhs.digits.get(i).copied().unwrap_or(0);
+
+                    let sum = a as u128 + b as u128 + carry as u128;
+                    result.push((sum % BigInt::BASE as u128) as u64);
+                    carry = (sum / BigInt::BASE as u128) as u64;
+                }
+
+                if carry > 0 {
+                    result.push(carry);
+                }
+
+                let mut big_int = BigInt {
+                    digits: result,
+                    is_negative: self.is_negative,
+                };
+                big_int.trim_leading_zeros();
+                big_int
+            }
+        }
+    }
+
+
+
+
 }
