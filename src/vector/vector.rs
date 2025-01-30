@@ -198,6 +198,34 @@ mod vector {
         }
     }
 
+    impl Mul for &BigInt {
+        type Output = BigInt;
+
+        fn mul(self, rhs: Self) -> Self::Output {
+            if self.is_zero() || rhs.is_zero() {
+                return BigInt::from_u64(0);
+            }
+
+            let mut result = vec![0; self.digits.len() + rhs.digits.len()];
+
+            for i in 0..self.digits.len() {
+                let mut carry = 0u128;
+                for j in 0..rhs.digits.len() {
+                    let product = self.digits[i] as u128 * rhs.digits[j] as u128 + carry + result[i + j] as u128;
+                    result[i + j] = (product % BigInt::BASE as u128) as u64;
+                    carry = product / BigInt::BASE as u128;
+                }
+                result[i + rhs.digits.len()] = carry as u64;
+            }
+
+            let mut big_int = BigInt {
+                digits: result,
+                is_negative: self.is_negative != rhs.is_negative,
+            };
+            big_int.trim_leading_zeros();
+            big_int
+        }
+    }
 
 
 }
