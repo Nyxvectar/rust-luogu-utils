@@ -14,5 +14,92 @@ mod vector {
         is_negative: bool,
     }
 
+    impl BigInt {
+        const BASE: u64 = 1_000_000_000_000_000_000;
+        const BASE_STR: usize = 18;
+
+        pub fn from_u64 (n: u64) -> Self {
+            if n == 0 {
+                BigInt {
+                    digits: Vec::new (),
+                    is_negative: false,
+                }
+            } else {
+                BigInt {
+                    digits: vec![n],
+                    is_negative: false,
+                }
+            }
+        }
+
+        pub fn from_str (s: &str) -> Result<Self, String> {
+            let mut s = s.trim ();
+            let mut is_negative = false;
+
+            if s.starts_with ('-') {
+                is_negative = true;
+                s = &s [1..];
+                if s.is_empty () {
+                    return Err ("无效的数字字符串：仅包含负号".to_string ());
+                }
+            }
+
+            let s = s.trim_start_matches ('0');
+            if s.is_empty () {
+                return Ok (BigInt {
+                    digits: Vec::new (),
+                    is_negative: false,
+                });
+            }
+
+            let mut digits = Vec::new();
+            let mut remaining = s;
+
+            while !remaining.is_empty () {
+                let take = remaining.len ().min (Self::BASE_STR);
+                let (part, rest) = if remaining.len () > take {
+                    (&remaining [0..remaining.len () - take], &remaining [remaining.len () - take..])
+                } else {
+                    ("", remaining)
+                };
+                remaining = part;
+
+                let num = rest
+                    .parse::<u64>()
+                    .map_err (|_| format!("无效的数字部分: {}", rest))?;
+                digits.push (num);
+            }
+
+            Ok(BigInt {
+                digits,
+                is_negative,
+            })
+        }
+
+        pub fn is_zero (&self) -> bool {
+            self.digits.is_empty ()
+        }
+
+        fn trim_leading_zeros (&mut self) {
+            while let Some (&0) = self.digits.last () {
+                self.digits.pop ();
+            }
+        }
+
+        fn greater_than_unsigned (&self, other: &Self) -> bool {
+            if self.digits.len () != other.digits.len () {
+                return self.digits.len () > other.digits.len ();
+            }
+
+            for i in (0..self.digits.len()).rev() {
+                if self.digits[i] > other.digits[i] {
+                    return true;
+                } else if self.digits[i] < other.digits[i] {
+                    return false;
+                }
+            }
+            false
+        }
+    }
 
 }
