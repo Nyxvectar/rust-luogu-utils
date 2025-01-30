@@ -144,6 +144,59 @@ mod vector {
         }
     }
 
+    impl Sub for &BigInt {
+        type Output = BigInt;
+
+        fn sub (self, rhs: Self) -> Self::Output {
+            if self.is_negative != rhs.is_negative {
+                let mut rhs_neg = rhs.clone ();
+                rhs_neg.is_negative = !rhs_neg.is_negative;
+                return self + &rhs_neg;
+            }
+
+            let (result_is_negative, a, b) = if !self.is_negative {
+                if self.greater_than_unsigned (rhs) {
+                    (false, self, rhs)
+                } else {
+                    (true, rhs, self)
+                }
+            } else {
+                if rhs.greater_than_unsigned (self) {
+                    (false, rhs, self)
+                } else {
+                    (true, self, rhs)
+                }
+            };
+
+            let mut result = Vec::new ();
+            let mut borrow = 0;
+
+            for i in 0..a.digits.len() {
+                let a_digit = a.digits[i];
+                let b_digit = b.digits.get(i).copied().unwrap_or(0);
+
+                let a_val = a_digit as i128 - borrow as i128;
+                let b_val = b_digit as i128;
+
+                let diff = if a_val >= b_val {
+                    borrow = 0;
+                    (a_val - b_val) as u64
+                } else {
+                    borrow = 1;
+                    (a_val + BigInt::BASE as i128 - b_val) as u64
+                };
+
+                result.push(diff);
+            }
+
+            let mut big_int = BigInt {
+                digits: result,
+                is_negative: result_is_negative,
+            };
+            big_int.trim_leading_zeros();
+            big_int
+        }
+    }
 
 
 
